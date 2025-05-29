@@ -16,8 +16,8 @@ public class FloreriaController : ControllerBase{
     }
     // GET by Id action
     [HttpGet("{id}")]
-    public ActionResult<Flor> Get(int id){
-        Flor? f = FlorService.Get(id);
+    public ActionResult<Flor> Get(int id, IFloresService fServ){
+        Flor? f = fServ.GetS(id);
         return (f is null) ? NotFound() : f;
     }
     // POST action

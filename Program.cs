@@ -1,3 +1,6 @@
+using FloreriaAPI_ASP.NET.Models;
+using FloreriaAPI_ASP.NET.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +9,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<IFloresService, FlorService>();
 
 var app = builder.Build();
 
@@ -19,6 +24,14 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseAuthentication();
+
+app.Use(async (context, next) =>
+{
+    await next();
+    Console.WriteLine($"{context.Request.Method} {context.Request.Path} {context.Response.StatusCode}");
+});
 
 app.MapControllers();
 

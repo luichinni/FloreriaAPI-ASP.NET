@@ -1,6 +1,6 @@
 namespace FloreriaAPI_ASP.NET.Models;
 
-public enum Familia{
+public enum Family{
     Rosaceas,
     Liliaceas,
     Asteraceas
