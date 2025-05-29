@@ -1,5 +1,7 @@
 using FloreriaAPI_ASP.NET.Models;
+using FloreriaAPI_ASP.NET.Repository;
 using FloreriaAPI_ASP.NET.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<IFloresService, FlorService>();
+builder.Services.AddDbContext<FloreriaContext>(op => op.UseSqlite("data source=Floreria.sqlite"));
+
+builder.Services.AddScoped<IFlowerService, FlowerService>();
+builder.Services.AddScoped<IFlowerRepository, FlowerRepository>();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var app = builder.Build();
 

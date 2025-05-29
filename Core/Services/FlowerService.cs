@@ -1,3 +1,5 @@
+using FloreriaAPI_ASP.NET.DTOs;
+using FloreriaAPI_ASP.NET.Filters;
 using FloreriaAPI_ASP.NET.Models;
 
 namespace FloreriaAPI_ASP.NET.Services;
@@ -5,8 +7,8 @@ namespace FloreriaAPI_ASP.NET.Services;
 public class FlowerService : IFlowerService
 {
     protected IFlowerRepository _flowersRepo;
-    protected ILogger _logger;
-    public FlowerService(IFlowerRepository flowersRepo, ILogger logger)
+    protected ILogger<FlowerService> _logger;
+    public FlowerService(IFlowerRepository flowersRepo, ILogger<FlowerService> logger)
     {
         _flowersRepo = flowersRepo;
         _logger = logger;
@@ -15,15 +17,15 @@ public class FlowerService : IFlowerService
     {
         // throw errors por dato
     }
-    public async Task<Flower?> CreateFlower(Flower f)
+    public async Task<Flower?> CreateFlower(FlowerDTO f)
     {
-        Flower? nF = null;
+        Flower? nF = toFlower(f);
         
-        isValidFlower(f);
+        isValidFlower(nF);
 
         try
         {
-            nF = await _flowersRepo.CreateFlower(f);
+            nF = await _flowersRepo.CreateFlower(nF);
         }
         catch (Exception e)
         {
@@ -51,9 +53,9 @@ public class FlowerService : IFlowerService
         return ok;
     }
 
-    public async Task<List<Flower>> GetAllFlores()
+    public async Task<List<Flower>> GetAllFlowers(FlowerFilter filter)
     {
-        return await _flowersRepo.GetAllFlowers();
+        return await _flowersRepo.GetAllFlowers(filter);
     }
 
     public async Task<Flower?> GetFlower(int id)
@@ -61,14 +63,35 @@ public class FlowerService : IFlowerService
         return await _flowersRepo.GetFlower(id);
     }
 
-    public async Task<Flower> UpdateFlower(int id, Flower f)
+    public async Task<Flower> UpdateFlower(int id, FlowerDTO f)
     {
+        _logger.LogInformation("Entrando update service");
         Flower? fExist = await GetFlower(id) ?? throw new Exception("No existe la flor que se intenta modificar");
 
-        isValidFlower(f);
+        Flower nFlower = toFlower(f);
 
-        f = await _flowersRepo.UpdateFlower(id, f);
+        isValidFlower(nFlower);
 
-        return f;
+        _logger.LogInformation("Entrando al try");
+
+        try
+        {
+            return await _flowersRepo.UpdateFlower(id, nFlower);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Update Flower");
+        }
+        return nFlower;
+    }
+
+    public Flower toFlower(FlowerDTO fd)
+    {
+        return new Flower()
+        {
+            Nombre = fd.Nombre,
+            Descripcion = fd.Descripcion,
+            Family = fd.Family.HasValue ? fd.Family.Value : Family.Otro
+        };
     }
 }

@@ -1,3 +1,6 @@
+using System.Threading.Tasks;
+using FloreriaAPI_ASP.NET.DTOs;
+using FloreriaAPI_ASP.NET.Filters;
 using FloreriaAPI_ASP.NET.Models;
 using FloreriaAPI_ASP.NET.Services;
 
@@ -7,43 +10,40 @@ namespace FloreriaAPI_ASP.NET.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class FloreriaController : ControllerBase{
-
-    public FloreriaController(){}
+    private IFlowerService _flowerService;
+    public FloreriaController(IFlowerService flowerService)
+    {
+        _flowerService = flowerService;
+    }
     // GET all action
     [HttpGet]
-    public List<Flor> GetAll(){
-        return FlorService.GetAll();
+    public async Task<List<Flower>> GetAll([FromQuery] FlowerFilter filter){
+        return await _flowerService.GetAllFlowers(filter);
     }
     // GET by Id action
     [HttpGet("{id}")]
-    public ActionResult<Flor> Get(int id, IFloresService fServ){
-        Flor? f = fServ.GetS(id);
+    public async Task<ActionResult<Flower>> Get(int id){
+        Flower? f = await _flowerService.GetFlower(id);
         return (f is null) ? NotFound() : f;
     }
     // POST action
     [HttpPost]
-    public IActionResult Create(Flor flor){
-        FlorService.Add(flor);
+    public ActionResult Create(FlowerDTO flor){
+        _flowerService.CreateFlower(flor);
         return Created();
     }
     // PUT action
     [HttpPut("{id}")]
-    public IActionResult Update(int id, Flor flor){
-        if (flor.Id != id) return NotFound();
-        if (FlorService.Get(id) is null) return BadRequest(); 
+    public async Task<ActionResult<Flower>> Update(int id, FlowerDTO flor){
+        if ((await _flowerService.GetFlower(id)) is null) return BadRequest();
 
-        flor.Id = id;
-        FlorService.Update(flor);
-
-        return NoContent();
+        return await _flowerService.UpdateFlower(id, flor);
     }
     // DELETE action
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id){
-        if (FlorService.Get(id) is null) return BadRequest();
+    public async Task<ActionResult<bool>> Delete(int id){
+        if ((await _flowerService.GetFlower(id)) is null) return BadRequest();
 
-        FlorService.Delete(id);
-
-        return NoContent();
+        return await _flowerService.DeleteFlower(id);
     }
 }

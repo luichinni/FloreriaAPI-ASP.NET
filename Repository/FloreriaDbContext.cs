@@ -4,10 +4,9 @@ namespace FloreriaAPI_ASP.NET.Repository;
 
 public class FloreriaContext : DbContext
 {
-    public DbSet<Flower> Flowers { get; set;}
+    public DbSet<Flower> Flowers { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public FloreriaContext(DbContextOptions op) : base(op)
     {
-        optionsBuilder.UseSqlite("data source=Floreria.sqlite");
     }
 }
