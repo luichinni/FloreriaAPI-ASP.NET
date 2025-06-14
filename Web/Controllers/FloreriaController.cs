@@ -1,15 +1,14 @@
-using System.Threading.Tasks;
 using FloreriaAPI_ASP.NET.DTOs;
 using FloreriaAPI_ASP.NET.Filters;
 using FloreriaAPI_ASP.NET.Models;
-using FloreriaAPI_ASP.NET.Services;
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace FloreriaAPI_ASP.NET.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FloreriaController : ControllerBase{
+public class FloreriaController : ControllerBase
+{
     private IFlowerService _flowerService;
     public FloreriaController(IFlowerService flowerService)
     {
@@ -27,14 +26,15 @@ public class FloreriaController : ControllerBase{
         return (f is null) ? NotFound() : f;
     }
     // POST action
+    [Authorize(Policy = PermisosEnum.FlowerCreate)]
     [HttpPost]
-    public ActionResult Create(FlowerDTO flor){
+    public ActionResult Create([FromBody] FlowerDTO flor){
         _flowerService.CreateFlower(flor);
         return Created();
     }
     // PUT action
     [HttpPut("{id}")]
-    public async Task<ActionResult<Flower>> Update(int id, FlowerDTO flor){
+    public async Task<ActionResult<Flower>> Update(int id, [FromBody] FlowerDTO flor){
         if ((await _flowerService.GetFlower(id)) is null) return BadRequest();
 
         return await _flowerService.UpdateFlower(id, flor);

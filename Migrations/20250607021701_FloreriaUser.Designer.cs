@@ -3,6 +3,7 @@ using System;
 using FloreriaAPI_ASP.NET.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FloreriaAPI_ASP.NET.Migrations
 {
     [DbContext(typeof(FloreriaContext))]
-    partial class FloreriaContextModelSnapshot : ModelSnapshot
+    [Migration("20250607021701_FloreriaUser")]
+    partial class FloreriaUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
