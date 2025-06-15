@@ -18,8 +18,64 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+/* builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    }
+); */
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddCors();
+
+builder.Services.AddDbContext<FloreriaContext>(op => op.UseSqlite("data source=Floreria.sqlite"));
+
+builder.Services.AddScoped<IAuthorizationHandler, RoleClaimHandler>();
+
+builder.Services.AddIdentity<FloreriaUser, IdentityRole>()
+    .AddEntityFrameworkStores<FloreriaContext>()
+    .AddDefaultTokenProviders();
+
+// Crea todos los permisos como politicas
+// https://learn.microsoft.com/en-us/aspnet/core/security/authorization/claims?view=aspnetcore-8.0
+foreach (var p in PermisosEnum.Todos)
+{
+    builder.Services.AddAuthorization(
+        op => op.AddPolicy(
+            p,
+            policy => policy.Requirements.Add(new RoleClaimRequirement(PermisosEnum.PermisoType, p))/* policy.AddRequirements(new RoleClaimRequirement(PermisosEnum.PermisoType, p)) */
+        )
+    );
+}
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -31,33 +87,6 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
-
-builder.Services.AddDbContext<FloreriaContext>(op => op.UseSqlite("data source=Floreria.sqlite"));
-
-builder.Services.AddCors();
-
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication()
-    .AddCookie(IdentityConstants.ApplicationScheme);
-
-builder.Services.AddScoped<IAuthorizationHandler, RoleClaimHandler>();
-
-// Crea todos los permisos como politicas
-// https://learn.microsoft.com/en-us/aspnet/core/security/authorization/claims?view=aspnetcore-8.0
-foreach (var p in PermisosEnum.Todos)
-{
-    builder.Services.AddAuthorization(
-        op => op.AddPolicy(
-            p,
-            policy => policy.AddRequirements(new RoleClaimRequirement(PermisosEnum.PermisoType, p))
-        )
-    );
-}
-// REVISAR COOKIES Y LOGIN
-builder.Services.AddIdentityCore<FloreriaUser>()
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<FloreriaContext>()
-    .AddSignInManager();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
@@ -80,9 +109,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseCors(options =>
     options.WithOrigins("http://localhost:5228")
@@ -95,6 +123,13 @@ app.Use(async (context, next) =>
 {
     await next();
     Console.WriteLine($"{context.Request.Method} {context.Request.Path} {context.Response.StatusCode}");
+});
+
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"Authenticated: {context.User.Identity?.IsAuthenticated}");
+    Console.WriteLine($"User: {context.User.Identity?.Name ?? "N/A"}");
+    await next();
 });
 
 app.MapControllers();

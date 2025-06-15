@@ -26,8 +26,8 @@ public class FloreriaController : ControllerBase
         return (f is null) ? NotFound() : f;
     }
     // POST action
-    [Authorize(Policy = PermisosEnum.FlowerCreate)]
     [HttpPost]
+    [Authorize(Policy = PermisosEnum.FlowerCreate)]
     public ActionResult Create([FromBody] FlowerDTO flor){
         _flowerService.CreateFlower(flor);
         return Created();

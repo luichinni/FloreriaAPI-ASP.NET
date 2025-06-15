@@ -15,10 +15,12 @@ public class RoleClaimHandler : AuthorizationHandler<RoleClaimRequirement>
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, RoleClaimRequirement requirement)
     {
+        Console.WriteLine("Entra");
+        Console.WriteLine(context.User.Identity?.IsAuthenticated ?? true);
         var user = await _userManager.GetUserAsync(context.User);
         if (user == null)
             return;
-
+        Console.WriteLine("No es null");
         var roles = await _userManager.GetRolesAsync(user);
 
         foreach (var roleName in roles)
@@ -30,6 +32,7 @@ public class RoleClaimHandler : AuthorizationHandler<RoleClaimRequirement>
 
             if (claims.Any(c => c.Type == requirement.ClaimType && c.Value == requirement.ClaimValue))
             {
+                Console.WriteLine("Tiene permisos");
                 context.Succeed(requirement);
                 return;
             }

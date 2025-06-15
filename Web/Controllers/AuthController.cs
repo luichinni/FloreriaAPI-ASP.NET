@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using FloreriaAPI_ASP.NET.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,6 +46,26 @@ public class AuthController : ControllerBase
         _signIn = signIn;
     }
 
+    [Authorize]
+    [HttpGet("whoami")]
+    public IActionResult WhoAmI()
+    {
+        Console.WriteLine("Responde");
+        return Ok(new
+        {
+            IsAuthenticated = User.Identity?.IsAuthenticated,
+            Name = User.Identity?.Name,
+            Claims = User.Claims.Select(c => new { c.Type, c.Value })
+        });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync();
+        return Ok();
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO login)
     {
@@ -52,7 +74,7 @@ public class AuthController : ControllerBase
         if (user is null) return Unauthorized(new { Message = "Usuario o contraseña incorrectos." });
 
         // Esto supuestamente establece la cookie ya configurada en el Program.cs
-        var loginResult = await _signIn.PasswordSignInAsync(user, login.Password, isPersistent: false, lockoutOnFailure: false);
+        var loginResult = await _signIn.PasswordSignInAsync(user, login.Password, isPersistent: true, lockoutOnFailure: false);
 
         if (loginResult.Succeeded)
         {
